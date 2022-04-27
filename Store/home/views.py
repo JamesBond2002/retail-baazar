@@ -71,7 +71,7 @@ def handleLogin(request):
         user = authenticate(username=(
             email+loginAs), password=password, first_name=email, last_name=loginAs)
 
-        print(type(user))
+        
         if user is not None:
             login(request, user)
             if(loginAs == 'Seller'):
@@ -132,17 +132,16 @@ def signup(request):
                 "INSERT INTO customer(customerName,customerNumber,customerEmail) VALUES(%s,%s,%s)", (name, phone, email))
 
             val = cur.execute("SELECT * FROM customer")
-            print(cur.fetchall())
+            
         elif(signAs == "Seller"):
-            print("+++++++++++++++++++++++++++++++++++++++++++")
             cur.execute(
                 "INSERT INTO seller(sellerEmail,sellerName,sellerNumber,sellerWarehouse) VALUES(%s,%s,%s,%s)", (email, name, phone, 1))
-            print("--------------------------------------------")
+            
             val = cur.execute("SELECT * FROM seller")
-            print(cur.fetchall())
+            
         elif(signAs == "Delivery"):
             cur.execute(
-                "INSERT INTO delivery(deliveryName,deliveryNumber,deliveryEmail) VALUES(%s,%s,%s)", (name, phone, email))
+                "INSERT INTO deliveryPerson(deliveryPersonName,phoneNumber, ordersTaken ,deliveryPersonEmail ) VALUES(%s,%s,%s,%s)", (name, phone,0, email))
         else:
             return HttpResponse("<h1>Invalid</h1>")
 
@@ -166,9 +165,9 @@ def add_product(request):
         Brand = request.POST.get('Brand')
         sellerEmail = request.POST.get('Seller ID')
         img = request.FILES.get('filename')
-        print(img, type(img))
+        
         bin_img = img.read()
-        print(type(img.file), type(bin_img))
+        
 
         db.ping()
         cur = db.cursor()
@@ -190,7 +189,7 @@ def seller(request):
         db.ping()
         cur = db.cursor()
 
-        print(productID, "-----------")
+        
         cur.execute("DELETE FROM Product WHERE sellerEmail= %(seller_id)s AND ProductID=%(proId)s", {
                     'seller_id': sellerEmail, 'proId': productID})
         return redirect('seller')
@@ -221,8 +220,14 @@ def seller(request):
 
 
 def delivery(request):
-    print(request.session['email'])
-    return render(request, 'delivery.html')
+    db.ping()
+    cur = db.cursor()
+    Demail = request.session['email']
+    cur.execute("Select P.orderID,P.customerEmail, P.price,P.address,P.zip from orders P,deliveryPerson D where D.deliveryPersonEmail = P.deliveryPersonEmail and P.deliveryPersonEmail = %(Demail)s" , {'Demail' : Demail})
+    table1=cur.fetchall()
+    db.commit()
+    cur.close()
+    return render(request,'delivery.html',{'table1':table1})
 
 
 # newly added
@@ -237,7 +242,7 @@ def electronics(request):
     cur = db.cursor()
     cur.execute("select * from Product where categoryID=2")
     output = cur.fetchall()
-    print(request.session['email'])
+    
 
 
     for i in range(len(output)):
@@ -381,9 +386,6 @@ def create_order(request):
         my_cursor.execute(f'SELECT * FROM cart WHERE customerEmail = \'{Cid}\'')
         cart = my_cursor.fetchall()
 
-        
-
-        # my_cursor.execute(f'DELETE FROM cart WHERE customerEmail = \'{Cid}\'')
         
 
         return redirect(customer)
