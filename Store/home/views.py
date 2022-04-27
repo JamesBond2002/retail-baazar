@@ -9,13 +9,14 @@ from django.shortcuts import render
 import pymysql.cursors
 import pymysql
 import json
-
+import io
 from django.http import JsonResponse
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.contrib import messages
+from PIL import Image
 
 # Create your views here.
 
@@ -33,19 +34,21 @@ def connection():
 db = connection()
 
 
-def index(request):
+def index(request): 
 
-	if request.session['type'] == 'Customer':
-		return redirect('customer')
+    if 'type' not in request.session:
+        return render(request,'home.html')
 
-	if request.session['type'] == 'Delivery':
-		return redirect('delivery')
+    if request.session['type'] == 'Customer':
+        return redirect('customer')
 
-	if request.session['type'] == 'Seller':
-		return redirect('seller')
+    if request.session['type'] == 'Delivery':
+        return redirect('delivery')
 
-	return render(request,'home.html')
+    if request.session['type'] == 'Seller':
+        return redirect('seller')
 
+    return render(request,'home.html')
 
 def handleLogout(request):
     try:
@@ -235,14 +238,12 @@ def electronics(request):
     cur.execute("select * from Product where categoryID=2")
     output = cur.fetchall()
     print(request.session['email'])
-<<<<<<< HEAD
 
 
     for i in range(len(output)):
         # binary_data = base64.b64decode(output[0][6])
 
         print((output[i][6]))
-        print('-------------------------------------------------------------------')
         if(output[i][6] == None ):
             continue
 
