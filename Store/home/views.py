@@ -18,6 +18,8 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from PIL import Image
 
+import random
+
 # Create your views here.
 
 def connection():
@@ -368,6 +370,8 @@ def update_item(request):
         my_cursor.execute(query)
         my_connection.commit()
 
+        messages.success(request, "Your item has been added to cart.")
+
     return JsonResponse('Cart was updated', safe=False)
 
 def create_order(request):
@@ -383,11 +387,29 @@ def create_order(request):
         my_connection.ping()
         my_cursor = my_connection.cursor()
 
-        my_cursor.execute(f'SELECT * FROM cart WHERE customerEmail = \'{Cid}\'')
-        cart = my_cursor.fetchall()
+        my_cursor.execute(f'SELECT deliveryPersonEmail FROM deliveryPerson WHERE ordersTaken = (SELECT MIN(ordersTaken) FROM deliveryPerson)')
+        deliveryPerson = my_cursor.fetchone()[0]
 
+
+        my_cursor.execute(f'INSERT INTO orders(customerEmail, deliveryPersonEmail, price, address, zip) VALUES (\'{Cid}\', \'{deliveryPerson}\', \
+            (SELECT SUM(price) FROM cart WHERE customerEmail = \'{Cid}\'), \'{address}\', {zip_code})')
+        my_connection.commit()
+        
+        my_cursor.execute(f'SELECT MAX(orderID) FROM orders')
+        orderID = my_cursor.fetchone()[0]
+
+<<<<<<< HEAD
+=======
+        my_cursor.execute(f'INSERT INTO Inventory(OrderID, ProductID, sellerEmail, Quantity) \
+            SELECT orders.OrderID, cart.ProductID, cart.sellerEmail, cart.quantity FROM \
+            orders INNER JOIN cart ON orders.customerEmail = cart.customerEmail WHERE OrderID = {orderID}')
+        my_connection.commit() 
+
+        my_cursor.execute(f'DELETE FROM cart WHERE customerEmail = \'{Cid}\'')
+        my_connection.commit()
         
 
+>>>>>>> abe8a0a5146f137980b18d418d17d338a232ec55
         return redirect(customer)
 
     return redirect(checkout)
