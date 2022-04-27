@@ -245,7 +245,6 @@ def electronics(request):
     for i in range(len(output)):
         # binary_data = base64.b64decode(output[0][6])
 
-        print((output[i][6]))
         if(output[i][6] == None ):
             continue
 
@@ -253,12 +252,10 @@ def electronics(request):
         image = Image.open(io.BytesIO(output[i][6]))
 
 
-        print(io.BytesIO(output[i][6]))
         image = image.convert('RGB')
         image.save('static/' + str(i) + '_electronics' + '.jpeg')
 
-    for i in range(len(output)):
-        output = [output[i] + tuple(['static/' + str(i) + '_electronics' + '.jpeg' ]) for i in range(len(output))]
+    output = [output[i] + tuple(['static/logo.png'] if (output[i][6] == None) else ['static/' + str(i) + '_electronics' + '.jpeg' ]) for i in range(len(output))]
 
     return render(request, 'electronics.html', {'products': output})
 
@@ -268,6 +265,20 @@ def clothing(request):
     cur = db.cursor()
     cur.execute("select * from Product where categoryID=1")
     output = cur.fetchall()
+    for i in range(len(output)):
+        # binary_data = base64.b64decode(output[0][6])
+
+        if(output[i][6] == None ):
+            continue
+
+        image = Image.open(io.BytesIO(output[i][6]))
+
+        image = image.convert('RGB')
+        image.save('static/' + str(i) + '_clothing' + '.jpeg')
+
+    
+    output = [output[i] + tuple(['static/logo.png'] if (output[i][6] == None) else ['static/' + str(i) + '_clothing' + '.jpeg' ] ) for i in range(len(output))]
+
 
     return render(request, 'clothing.html', {'products': output})
 
@@ -277,6 +288,22 @@ def groceries(request):
     cur = db.cursor()
     cur.execute("select * from Product where categoryID=3")
     output = cur.fetchall()
+    for i in range(len(output)):
+        # binary_data = base64.b64decode(output[0][6])
+
+        if(output[i][6] == None ):
+            continue
+
+
+        image = Image.open(io.BytesIO(output[i][6]))
+
+
+        image = image.convert('RGB')
+        image.save('static/' + str(i) + '_grocery' + '.jpeg')
+
+   
+    output = [output[i] + tuple(['static/logo.png'] if (output[i][6] == None) else ['static/' + str(i) + '_grocery' + '.jpeg' ]) for i in range(len(output))]
+
 
     return render(request, 'groceries.html', {'products': output})
 
