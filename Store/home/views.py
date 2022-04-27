@@ -1,4 +1,5 @@
 from turtle import home
+from urllib import request
 from django.shortcuts import render, HttpResponse
 
 
@@ -405,3 +406,29 @@ def create_order(request):
         return redirect(customer)
 
     return redirect(checkout)
+
+def your_orders(request):
+    Cid = request.session['email']
+
+    my_connection = connection()
+    my_connection.ping()
+    my_cursor = my_connection.cursor()
+
+    my_cursor.execute(f'SELECT orderID, price, address, deliveryPersonEmail, zip FROM orders WHERE customerEmail = \'{Cid}\'')
+    orders = my_cursor.fetchall()
+
+    return render(request, 'your_orders.html', {'table' : orders})
+
+def order(request, *args, **kwargs):
+    my_connection = connection()
+    my_connection.ping()
+    my_cursor = my_connection.cursor()
+
+    orderID = kwargs['orderID']
+    my_cursor.execute(f'SELECT Product.ProductName, Product.sellerEmail, Inventory.Quantity, Inventory.Quantity * Product.Price\
+        FROM Product INNER JOIN Inventory ON Product.ProductID = Inventory.ProductID AND Product.sellerEmail = Inventory.sellerEmail\
+        WHERE Inventory.OrderID = {orderID}')
+    inventory = my_cursor.fetchall()
+    print(inventory)
+
+    return render(request, 'order.html', {'table' : inventory, 'orderID' : orderID})
