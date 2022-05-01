@@ -38,6 +38,8 @@
           {% if "Delivery" in request.session.type%}
 
           <a class="nav-item nav-link" id="delivery" href="/delivery">Home</a>
+
+          <a class="nav-item nav-link" id="deliveries" href="/deliveries">Deliveries</a>
           <a class="nav-item nav-link" id="handleLogout" href="/handleLogout">Logout</a>
           
           {% elif "Seller" in request.session.type%}
