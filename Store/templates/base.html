@@ -38,16 +38,16 @@
           {% if "Delivery" in request.session.type%}
 
           <a class="nav-item nav-link" id="delivery" href="/delivery">Home</a>
-          
           <a class="nav-item nav-link" id="handleLogout" href="/handleLogout">Logout</a>
           
           {% elif "Seller" in request.session.type%}
           <a class="nav-item nav-link" id="seller" href="/seller">Home</a>
-          <a class="nav-item nav-link" id="add_product" href="/add_product">add_product</a>
+          <a class="nav-item nav-link" id="add_product" href="/add_product">Add Product</a>
           <a class="nav-item nav-link" id="handleLogout" href="/handleLogout">Logout</a>
           {% elif "Customer" in request.session.type%}
           <a class="nav-item nav-link" id="customer" href="/customer">Home</a>
-          <a class="nav-item nav-link" id="cart" href="/checkout">cart</a>
+          <a class="nav-item nav-link" id="cart" href="/checkout">Cart</a>
+          <a class="nav-item nav-link" id="your_orders" href="/your_orders">Your Orders</a>
           <a class="nav-item nav-link" id="handleLogout" href="/handleLogout">Logout</a>
           {% else %}
 

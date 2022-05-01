@@ -1,4 +1,5 @@
 from turtle import home
+from urllib import request
 from django.shortcuts import render, HttpResponse
 
 
@@ -73,7 +74,7 @@ def handleLogin(request):
         user = authenticate(username=(
             email+loginAs), password=password, first_name=email, last_name=loginAs)
 
-        
+        print(type(user))
         if user is not None:
             login(request, user)
             if(loginAs == 'Seller'):
@@ -134,16 +135,17 @@ def signup(request):
                 "INSERT INTO customer(customerName,customerNumber,customerEmail) VALUES(%s,%s,%s)", (name, phone, email))
 
             val = cur.execute("SELECT * FROM customer")
-            
+            print(cur.fetchall())
         elif(signAs == "Seller"):
+            print("+++++++++++++++++++++++++++++++++++++++++++")
             cur.execute(
                 "INSERT INTO seller(sellerEmail,sellerName,sellerNumber,sellerWarehouse) VALUES(%s,%s,%s,%s)", (email, name, phone, 1))
-            
+            print("--------------------------------------------")
             val = cur.execute("SELECT * FROM seller")
-            
+            print(cur.fetchall())
         elif(signAs == "Delivery"):
             cur.execute(
-                "INSERT INTO deliveryPerson(deliveryPersonName,phoneNumber, ordersTaken ,deliveryPersonEmail ) VALUES(%s,%s,%s,%s)", (name, phone,0, email))
+                "INSERT INTO delivery(deliveryName,deliveryNumber,deliveryEmail) VALUES(%s,%s,%s)", (name, phone, email))
         else:
             return HttpResponse("<h1>Invalid</h1>")
 
@@ -167,9 +169,9 @@ def add_product(request):
         Brand = request.POST.get('Brand')
         sellerEmail = request.POST.get('Seller ID')
         img = request.FILES.get('filename')
-        
+        print(img, type(img))
         bin_img = img.read()
-        
+        print(type(img.file), type(bin_img))
 
         db.ping()
         cur = db.cursor()
@@ -191,7 +193,7 @@ def seller(request):
         db.ping()
         cur = db.cursor()
 
-        
+        print(productID, "-----------")
         cur.execute("DELETE FROM Product WHERE sellerEmail= %(seller_id)s AND ProductID=%(proId)s", {
                     'seller_id': sellerEmail, 'proId': productID})
         return redirect('seller')
@@ -229,6 +231,7 @@ def delivery(request):
     table1=cur.fetchall()
     db.commit()
     cur.close()
+    
     return render(request,'delivery.html',{'table1':table1})
 
 
@@ -244,7 +247,7 @@ def electronics(request):
     cur = db.cursor()
     cur.execute("select * from Product where categoryID=2")
     output = cur.fetchall()
-    
+    print(request.session['email'])
 
 
     for i in range(len(output)):
@@ -390,6 +393,14 @@ def create_order(request):
         my_cursor.execute(f'SELECT deliveryPersonEmail FROM deliveryPerson WHERE ordersTaken = (SELECT MIN(ordersTaken) FROM deliveryPerson)')
         deliveryPerson = my_cursor.fetchone()[0]
 
+        my_cursor.execute(f'SELECT MIN(ordersTaken) FROM deliveryPerson')
+        orderTaken = my_cursor.fetchone()[0]
+        my_cursor.execute(f'SELECT deliveryPersonEmail FROM deliveryPerson where ordersTaken = \'{orderTaken}\'')
+        dPerson = my_cursor.fetchone()[0]
+
+        print(orderTaken)
+        print(dPerson)
+        my_cursor.execute(f'UPDATE deliveryPerson SET ordersTaken = {orderTaken+1} WHERE deliveryPersonEmail=\'{dPerson}\'')
 
         my_cursor.execute(f'INSERT INTO orders(customerEmail, deliveryPersonEmail, price, address, zip) VALUES (\'{Cid}\', \'{deliveryPerson}\', \
             (SELECT SUM(price) FROM cart WHERE customerEmail = \'{Cid}\'), \'{address}\', {zip_code})')
@@ -398,8 +409,6 @@ def create_order(request):
         my_cursor.execute(f'SELECT MAX(orderID) FROM orders')
         orderID = my_cursor.fetchone()[0]
 
-<<<<<<< HEAD
-=======
         my_cursor.execute(f'INSERT INTO Inventory(OrderID, ProductID, sellerEmail, Quantity) \
             SELECT orders.OrderID, cart.ProductID, cart.sellerEmail, cart.quantity FROM \
             orders INNER JOIN cart ON orders.customerEmail = cart.customerEmail WHERE OrderID = {orderID}')
@@ -409,7 +418,32 @@ def create_order(request):
         my_connection.commit()
         
 
->>>>>>> abe8a0a5146f137980b18d418d17d338a232ec55
         return redirect(customer)
 
     return redirect(checkout)
+
+def your_orders(request):
+    Cid = request.session['email']
+
+    my_connection = connection()
+    my_connection.ping()
+    my_cursor = my_connection.cursor()
+
+    my_cursor.execute(f'SELECT orderID, price, address, deliveryPersonEmail, zip FROM orders WHERE customerEmail = \'{Cid}\'')
+    orders = my_cursor.fetchall()
+
+    return render(request, 'your_orders.html', {'table' : orders})
+
+def order(request, *args, **kwargs):
+    my_connection = connection()
+    my_connection.ping()
+    my_cursor = my_connection.cursor()
+
+    orderID = kwargs['orderID']
+    my_cursor.execute(f'SELECT Product.ProductName, Product.sellerEmail, Inventory.Quantity, Inventory.Quantity * Product.Price\
+        FROM Product INNER JOIN Inventory ON Product.ProductID = Inventory.ProductID AND Product.sellerEmail = Inventory.sellerEmail\
+        WHERE Inventory.OrderID = {orderID}')
+    inventory = my_cursor.fetchall()
+    print(inventory)
+
+    return render(request, 'order.html', {'table' : inventory, 'orderID' : orderID})
