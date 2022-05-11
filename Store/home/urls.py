@@ -4,9 +4,10 @@ from home import views
 
 urlpatterns = [
     path('',views.index,name="home"),
-    path('handleLogin',views.handleLogin,name="handleLogin"),
+    path('login2',views.login2,name="login2"),
+
+    path('signup2',views.signup2,name="signup2"),
     path('handleLogout',views.handleLogout,name="handleLogout"),
-    path('signup',views.signup,name="signup"),
     path('add_product',views.add_product,name="add_product"),
     path('seller',views.seller,name="seller"),
     path('customer',views.customer,name="customer"),

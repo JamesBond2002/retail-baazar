@@ -40,7 +40,7 @@ db = connection()
 def index(request): 
 
     if 'type' not in request.session:
-        return render(request,'home.html')
+        return redirect('login2')
 
     if request.session['type'] == 'Customer':
         return redirect('customer')
@@ -51,81 +51,108 @@ def index(request):
     if request.session['type'] == 'Seller':
         return redirect('seller')
 
-    return render(request,'home.html')
+    return redirect('login2')
+
+
+
+
+
 
 def handleLogout(request):
     try:
         del request.session['email']
         del request.session['type']
     except:
-        return redirect('handleLogin')
+        return redirect('login2')
 
-    return redirect('handleLogin')
+    return redirect('login2')
 
 
-def handleLogin(request):
 
-    if request.method == 'POST':
+def login2(request):
 
+    if request.method=='POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
-        loginAs = request.POST.get('user')
+        logCust = request.POST.get('logCust')
+        logSell = request.POST.get('logSell')
+        logDell = request.POST.get('logDell')
+
+        loginAs = ''
+
+        if(logCust=='on'):
+            loginAs='Customer'
+        elif(logDell=='on'):
+            loginAs='Delivery'
+        else:
+            loginAs='Seller'
 
         user = authenticate(username=(
             email+loginAs), password=password, first_name=email, last_name=loginAs)
 
-        print(type(user))
         if user is not None:
             login(request, user)
-            if(loginAs == 'Seller'):
-
+            if(logSell == 'on'):
                 request.session['email'] = email
                 request.session['type'] = loginAs
                 return redirect('seller')
 
-            if(loginAs == 'Customer'):
+            if(logCust == 'on'):
                 request.session['email'] = email
                 request.session['type'] = loginAs
                 return redirect('customer')
 
-            if(loginAs == 'Delivery'):
+            if(logDell== 'on'):
                 request.session['email'] = email
                 request.session['type'] = loginAs
                 return redirect('delivery')
         else:
             messages.error(request, 'Please check Login details')
-            return redirect('handleLogin')
-
-    return render(request, "login.html")
+            return redirect('login2')
 
 
-def signup(request):
+    return render(request, "login2.html")
+
+
+def signup2(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         name = request.POST.get('firstName')
         phone = request.POST.get('phoneNumber')
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
-        signAs = request.POST.get('user')
+
+        logCust = request.POST.get('logCust')
+        logSell = request.POST.get('logSell')
+        logDell = request.POST.get('logDell')
+
+        signAs=''
+
+        if(logCust=='on'):
+            signAs='Customer'
+        elif(logDell=='on'):
+            signAs='Delivery'
+        else:
+            signAs='Seller'
 
         if(len(email) < 4):
             messages.error(request, 'Email length must be 4')
-            return redirect('signup')
+            return redirect('signup2')
         elif(len(name) < 2):
 
             messages.error(
                 request, 'firstName must be greater than 2 characters')
 
-            return redirect('signup')
+            return redirect('signup2')
         elif (password1 != password2):
 
             messages.error(request, 'Password dont match')
 
-            return redirect('signup')
+            return redirect('signup2')
         elif(len(password1) < 5):
             messages.error(request, 'Password must be 5 characters')
 
-            return redirect('signup')
+            return redirect('signup2')
 
         db.ping()
         cur = db.cursor()
@@ -145,7 +172,7 @@ def signup(request):
             print(cur.fetchall())
         elif(signAs == "Delivery"):
             cur.execute(
-                "INSERT INTO delivery(deliveryName,deliveryNumber,deliveryEmail) VALUES(%s,%s,%s)", (name, phone, email))
+                "INSERT INTO deliveryPerson(deliveryPersonEmail,deliveryPersonName,phoneNumber,ordersTaken) VALUES(%s,%s,%s,%s)", (email,name, phone, 0))
         else:
             return HttpResponse("<h1>Invalid</h1>")
 
@@ -153,11 +180,9 @@ def signup(request):
 
         myuser = User.objects.create_user(usname, email, password1)
         myuser.save()
-        messages.success(request, 'Account created')
+        return redirect('login2')
 
-        return redirect('handleLogin')
-
-    return render(request, "signup.html")
+    return render(request, "signup2.html")
 
 
 def add_product(request):
@@ -167,7 +192,7 @@ def add_product(request):
         category = request.POST.get('category')
         Price = request.POST.get('Price')
         Brand = request.POST.get('Brand')
-        sellerEmail = request.POST.get('Seller ID')
+        sellerEmail = request.session['email']
         img = request.FILES.get('filename')
         print(img, type(img))
         bin_img = img.read()
